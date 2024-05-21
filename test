@@ -28,3 +28,13 @@ index=your_summary_index sourcetype=your_sourcetype earliest=-90d
 | eval duration_flag = if(transition_flag == 2, event_count, null)
 | where duration_flag is not null
 | stats avg(duration_flag) as avg_events_between_transitions
+
+
+index=your_summary_index sourcetype=your_sourcetype earliest=-90d
+| sort 0 host _time
+| streamstats current=f last(status) as prev_status by host
+| streamstats count as event_count by host
+| eval transition_group = if(status=="A", event_count, null)
+| filldown transition_group
+| where status=="B" and prev_status=="A"
+| stats count as event_count by host transition_group
